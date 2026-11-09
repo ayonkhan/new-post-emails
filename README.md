@@ -84,3 +84,7 @@ To see which post the deployed Worker emailed last:
 ```bash
 npx wrangler kv key get last-sent --binding SENT_POSTS --remote
 ```
+
+## License
+
+[MIT](LICENSE)
