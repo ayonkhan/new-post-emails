@@ -1,7 +1,7 @@
 {
-    "name": "new-post-emails",
+    "name": "paperboy",
     "private": true,
-    "description": "Cloudflare Worker that emails subscribers when a new post goes live on ayonkhan.ca",
+    "description": "Emails your subscribers when a new post appears in your RSS feed, using Resend",
     "scripts": {
         "build": "mjml templates/new-post.mjml -o templates/new-post.html",
         "dev": "wrangler dev --test-scheduled",

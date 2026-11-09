@@ -1,4 +1,4 @@
-name = "new-post-emails"
+name = "paperboy"
 main = "src/index.js"
 compatibility_date = "2026-10-25"
 
@@ -12,6 +12,11 @@ command = "npm run build"
 # Check the feed at the start of every hour
 [triggers]
 crons = ["0 * * * *"]
+
+# Keep logs, so a failed run shows its error
+[observability.logs]
+enabled = true
+invocation_logs = true
 
 # Remembers the last post that was emailed
 [[kv_namespaces]]

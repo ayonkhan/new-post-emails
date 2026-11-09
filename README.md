@@ -1,8 +1,8 @@
-# new-post-emails
+# Paperboy
 
-A Cloudflare Worker that emails subscribers when a new post goes live on [ayonkhan.ca](https://www.ayonkhan.ca/).
+**Paperboy** emails your subscribers when a new post appears in your RSS feed, using [Resend](https://resend.com/). It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
-Once an hour, it reads the blog's RSS feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in [Resend](https://resend.com/), scheduled two hours later. That leaves time to check the email and cancel it in Resend if something looks wrong.
+Once an hour, it reads the blog's RSS feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later. That leaves time to check the email and cancel it in Resend if something looks wrong.
 
 It reads the live feed instead of watching the blog's repo, because Hugo hides posts with a future date until that date comes. The feed only lists posts that are actually live.
 
