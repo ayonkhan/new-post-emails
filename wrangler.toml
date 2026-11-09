@@ -5,6 +5,10 @@ compatibility_date = "2026-10-25"
 # This Worker only runs on a schedule, so it doesn't need a public URL
 workers_dev = false
 
+# Settings live in the Cloudflare dashboard, under Settings > Variables and Secrets.
+# keep_vars stops each deploy from removing them.
+keep_vars = true
+
 # Compile the MJML template to HTML before each deploy
 [build]
 command = "npm run build"
@@ -23,15 +27,16 @@ invocation_logs = true
 binding = "SENT_POSTS"
 id = "21fbd26e67c646fca2fe24f541ee3d8f"
 
-[vars]
-SITE_NAME = "ayonkhan.ca"
-SITE_URL = "https://www.ayonkhan.ca/"
-FEED_URL = "https://www.ayonkhan.ca/index.xml"
-FROM_EMAIL = "Ayon Khan <blog@news.ayonkhan.ca>"
-REPLY_TO = "hello@ayonkhan.ca"
-SEGMENT_ID = "ea8cd8b7-a44f-45fe-96c2-e3c802630796"
-TIME_ZONE = "America/Regina"
-DATE_LOCALE = "en-GB"
+# To keep your settings in this file instead, remove keep_vars near the top and fill these in:
+# [vars]
+# SITE_NAME = "example.com"
+# SITE_URL = "https://example.com/"
+# FEED_URL = "https://example.com/index.xml"
+# FROM_EMAIL = "Your Name <blog@news.example.com>"
+# REPLY_TO = "hello@example.com"
+# SEGMENT_ID = "your-resend-segment-id"
+# TIME_ZONE = "UTC"
+# DATE_LOCALE = "en-GB"
 
 # Lets src/index.js import the compiled template as text
 [[rules]]

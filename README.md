@@ -63,9 +63,19 @@ It prints an `id`. Put that in `wrangler.toml`, under `[[kv_namespaces]]`, in pl
 2. Under **Audience**, create a segment for subscribers, and copy its ID.
 3. Under **API Keys**, create a key with sending access.
 
-### 4. Fill In the Settings
+### 4. Deploy
 
-Plain settings live under `[vars]` in `wrangler.toml`:
+```bash
+npm run deploy
+```
+
+This compiles the template and creates the Worker on Cloudflare.
+
+To deploy on every push instead, connect your fork in Cloudflare under **Workers & Pages > paperboy > Settings > Builds**.
+
+### 5. Fill In the Settings
+
+In Cloudflare, go to **Workers & Pages > paperboy > Settings > Variables and Secrets**, and add these as **Text** variables:
 
 | Setting | Example | What it's for |
 | --- | --- | --- |
@@ -78,7 +88,9 @@ Plain settings live under `[vars]` in `wrangler.toml`:
 | `TIME_ZONE` | `America/Regina` | Used for the post date in the email (optional, defaults to `UTC`) |
 | `DATE_LOCALE` | `en-US` | How the date is written (optional, defaults to `en-GB`, as in "7 November 2026") |
 
-The Resend API key is a secret, so it's set on Cloudflare instead:
+`keep_vars = true` in `wrangler.toml` makes deploys leave these alone. If you'd rather keep your settings in the repo, remove `keep_vars` and fill in the commented `[vars]` section in `wrangler.toml` instead.
+
+The Resend API key is a secret, so add it as a **Secret** in the same place, named `RESEND_API_KEY`. Or set it from the terminal:
 
 ```bash
 npx wrangler secret put RESEND_API_KEY
@@ -86,15 +98,7 @@ npx wrangler secret put RESEND_API_KEY
 
 It asks you to paste the key, and stores it encrypted.
 
-### 5. Deploy
-
-```bash
-npm run deploy
-```
-
-This compiles the template and deploys the Worker. From then on, it checks your feed at the start of every hour.
-
-To deploy on every push instead, connect the repo in Cloudflare under **Workers & Pages > paperboy > Settings > Builds**.
+From then on, Paperboy checks your feed at the start of every hour.
 
 ## Customize
 
@@ -105,14 +109,21 @@ To deploy on every push instead, connect the repo in Cloudflare under **Workers 
 
 ## Run Locally
 
-Create a `.dev.vars` file in the project folder. It's in `.gitignore`, so it never gets committed.
+Running locally doesn't read the dashboard, so put every setting in a `.dev.vars` file in the project folder. It's in `.gitignore`, so it never gets committed.
 
 ```text
 RESEND_API_KEY=re_...
+SITE_NAME=example.com
+SITE_URL=https://example.com/
+FEED_URL=https://example.com/index.xml
+FROM_EMAIL="Your Name <blog@news.example.com>"
+REPLY_TO=hello@example.com
 SEGMENT_ID=<a test segment with only your own address>
+TIME_ZONE=UTC
+DATE_LOCALE=en-GB
 ```
 
-`SEGMENT_ID` here overrides the one in `wrangler.toml`, so local runs only ever email the test segment, never real subscribers.
+Use a test segment with only your own address in it, so local runs can never email real subscribers.
 
 Locally, KV starts empty, so the first run would only record the newest post. To make the newest post count as new, pretend an older one was emailed last:
 
