@@ -8,7 +8,7 @@ export default {
 
 async function checkFeed(env) {
     var xml = await fetch(env.FEED_URL).then(function (response) { return response.text(); });
-    var post = latestPost(xml);
+    var post = latestPost(xml, env);
     if (!post) return;
 
     var lastSent = await env.SENT_POSTS.get('last-sent');
@@ -33,9 +33,16 @@ async function checkFeed(env) {
             from: env.FROM_EMAIL,
             reply_to: env.REPLY_TO,
             subject: 'New post: ' + post.title,
-            html: fill(template, post),
+            html: fill(template, {
+                title: post.title,
+                link: post.link,
+                description: post.description,
+                date: post.date,
+                site_name: env.SITE_NAME,
+                site_url: env.SITE_URL
+            }),
             send: true,
-            // Gives me time to check the email and cancel it in Resend
+            // Gives you time to check the email and cancel it in Resend
             scheduled_at: 'in 2 hours'
         })
     });
@@ -47,7 +54,7 @@ async function checkFeed(env) {
 }
 
 // The feed lists the newest post first, so the first <item> is the one we want
-function latestPost(xml) {
+function latestPost(xml, env) {
     var item = xml.match(/<item>([\s\S]*?)<\/item>/);
     if (!item) return null;
 
@@ -57,8 +64,9 @@ function latestPost(xml) {
         link: tag(item[1], 'link'),
         // The description is escaped HTML, so decode it once more and strip the tags
         description: decode(tag(item[1], 'description')).replace(/<[^>]+>/g, '').trim(),
-        date: date.toLocaleDateString('en-GB', {
-            day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Regina'
+        // Shown in the email as "7 November 2026", or however DATE_LOCALE writes it
+        date: date.toLocaleDateString(env.DATE_LOCALE || 'en-GB', {
+            day: 'numeric', month: 'long', year: 'numeric', timeZone: env.TIME_ZONE || 'UTC'
         })
     };
 }
@@ -88,8 +96,8 @@ function escapeHtml(text) {
 }
 
 // Uses %%name%% placeholders, so they never clash with Resend's {{{...}}} ones
-function fill(html, post) {
+function fill(html, values) {
     return html.replace(/%%(\w+)%%/g, function (match, name) {
-        return escapeHtml(post[name] || '');
+        return escapeHtml(values[name] || '');
     });
 }
