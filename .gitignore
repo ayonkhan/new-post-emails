@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Compiled from templates/new-post.mjml on every build
+templates/new-post.html
+
+# Local settings, which hold real API keys
+.dev.vars
+
+# Local state Wrangler creates while running the Worker
+.wrangler/
+
+# macOS
+.DS_Store

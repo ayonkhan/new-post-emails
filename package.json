@@ -1,0 +1,14 @@
+{
+    "name": "new-post-emails",
+    "private": true,
+    "description": "Cloudflare Worker that emails subscribers when a new post goes live on ayonkhan.ca",
+    "scripts": {
+        "build": "mjml templates/new-post.mjml -o templates/new-post.html",
+        "dev": "wrangler dev --test-scheduled",
+        "deploy": "wrangler deploy"
+    },
+    "devDependencies": {
+        "mjml": "^4.15.3",
+        "wrangler": "^4.0.0"
+    }
+}

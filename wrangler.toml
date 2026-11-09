@@ -1,0 +1,30 @@
+name = "new-post-emails"
+main = "src/index.js"
+compatibility_date = "2026-10-25"
+
+# This Worker only runs on a schedule, so it doesn't need a public URL
+workers_dev = false
+
+# Compile the MJML template to HTML before each deploy
+[build]
+command = "npm run build"
+
+# Check the feed at the start of every hour
+[triggers]
+crons = ["0 * * * *"]
+
+# Remembers the last post that was emailed
+[[kv_namespaces]]
+binding = "SENT_POSTS"
+id = "21fbd26e67c646fca2fe24f541ee3d8f"
+
+[vars]
+FEED_URL = "https://www.ayonkhan.ca/index.xml"
+FROM_EMAIL = "Ayon Khan <blog@ayonkhan.ca>"
+SEGMENT_ID = "ea8cd8b7-a44f-45fe-96c2-e3c802630796"
+
+# Lets src/index.js import the compiled template as text
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
