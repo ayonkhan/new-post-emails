@@ -6,7 +6,7 @@ Once an hour, it reads your feed. When it finds a post it hasn't emailed yet, it
 
 It works with any site that has an RSS feed, whatever it's built with. It reads the live feed instead of watching your site's repo, so a post with a future date isn't emailed until it's actually published.
 
-Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [papermod-subscribe](https://github.com/ayonkhan/papermod-subscribe). Any other way of adding contacts to a Resend segment works too.
+Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [PaperMod Subscribe](https://github.com/ayonkhan/papermod-subscribe). Any other way of adding contacts to a Resend segment works too.
 
 ## How It Works
 
