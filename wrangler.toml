@@ -21,6 +21,7 @@ id = "21fbd26e67c646fca2fe24f541ee3d8f"
 [vars]
 FEED_URL = "https://www.ayonkhan.ca/index.xml"
 FROM_EMAIL = "Ayon Khan <blog@news.ayonkhan.ca>"
+REPLY_TO = "hello@ayonkhan.ca"
 SEGMENT_ID = "ea8cd8b7-a44f-45fe-96c2-e3c802630796"
 
 # Lets src/index.js import the compiled template as text

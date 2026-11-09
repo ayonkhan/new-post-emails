@@ -31,6 +31,7 @@ async function checkFeed(env) {
             name: post.title,
             segment_id: env.SEGMENT_ID,
             from: env.FROM_EMAIL,
+            reply_to: env.REPLY_TO,
             subject: 'New post: ' + post.title,
             html: fill(template, post),
             send: true,

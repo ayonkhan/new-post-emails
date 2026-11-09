@@ -36,7 +36,7 @@ npx wrangler login
 
 ## Settings
 
-Plain settings live in `wrangler.toml`: the feed address, the sender, the subscribers segment, the KV namespace and the hourly schedule.
+Plain settings live in `wrangler.toml`: the feed address, the sender, the reply address, the subscribers segment, the KV namespace and the hourly schedule.
 
 The Resend API key is a secret, set once on Cloudflare:
 
