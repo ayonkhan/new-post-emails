@@ -6,7 +6,15 @@ export default {
     }
 };
 
+// Settings the Worker can't run without
+var REQUIRED = ['RESEND_API_KEY', 'FEED_URL', 'FROM_EMAIL', 'SEGMENT_ID', 'SITE_NAME', 'SITE_URL'];
+
 async function checkFeed(env) {
+    var missing = REQUIRED.filter(function (name) { return !env[name]; });
+    if (missing.length) {
+        throw new Error('Missing settings: ' + missing.join(', '));
+    }
+
     var xml = await fetch(env.FEED_URL).then(function (response) { return response.text(); });
     var post = latestPost(xml, env);
     if (!post) return;
@@ -43,7 +51,7 @@ async function checkFeed(env) {
             }),
             send: true,
             // Gives you time to check the email and cancel it in Resend
-            scheduled_at: 'in 2 hours'
+            scheduled_at: sendTime(env)
         })
     });
 
@@ -51,6 +59,17 @@ async function checkFeed(env) {
         throw new Error('Resend returned ' + response.status + ': ' + await response.text());
     }
     await env.SENT_POSTS.put('last-sent', post.link);
+}
+
+// SEND_DELAY_HOURS sets how long to wait before sending: 2 by default, 0 to send right away
+function sendTime(env) {
+    var hours = env.SEND_DELAY_HOURS === undefined || env.SEND_DELAY_HOURS === '' ? 2 : Number(env.SEND_DELAY_HOURS);
+    if (isNaN(hours) || hours < 0) {
+        throw new Error('SEND_DELAY_HOURS must be a number of hours, such as 2 or 0.5');
+    }
+    // Leaving scheduled_at out makes Resend send straight away
+    if (hours === 0) return undefined;
+    return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
 // The feed lists the newest post first, so the first <item> is the one we want

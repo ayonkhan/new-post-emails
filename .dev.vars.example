@@ -1,0 +1,17 @@
+# Copy this file to .dev.vars and fill it in. .dev.vars is ignored by Git.
+# Local runs don't read the Cloudflare dashboard, so every setting goes here.
+
+# Secret
+RESEND_API_KEY=re_...
+
+# Settings
+SITE_NAME=example.com
+SITE_URL=https://example.com/
+FEED_URL=https://example.com/index.xml
+FROM_EMAIL="Your Name <blog@news.example.com>"
+REPLY_TO=hello@example.com
+# Use a test segment with only your own address, so local runs never email real subscribers
+SEGMENT_ID=your-test-segment-id
+TIME_ZONE=UTC
+DATE_LOCALE=en-GB
+SEND_DELAY_HOURS=2

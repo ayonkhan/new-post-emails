@@ -2,7 +2,7 @@
 
 **Paperboy** emails your subscribers when a new post appears in your RSS feed, using [Resend](https://resend.com/). It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
-Once an hour, it reads your feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later. That leaves time to check the email and cancel it in Resend if something looks wrong.
+Once an hour, it reads your feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That leaves time to check the email and cancel it in Resend if something looks wrong.
 
 It works with any site that has an RSS feed, whatever it's built with. It reads the live feed instead of watching your site's repo, so a post with a future date isn't emailed until it's actually published.
 
@@ -87,6 +87,7 @@ In Cloudflare, go to **Workers & Pages > paperboy > Settings > Variables and Sec
 | `SEGMENT_ID` | the Resend segment ID | Who gets the email |
 | `TIME_ZONE` | `America/Regina` | Used for the post date in the email (optional, defaults to `UTC`) |
 | `DATE_LOCALE` | `en-US` | How the date is written (optional, defaults to `en-GB`, as in "7 November 2026") |
+| `SEND_DELAY_HOURS` | `2` | How long to wait before sending, so you can check the email first (optional, defaults to `2`; use `0` to send right away) |
 
 `keep_vars = true` in `wrangler.toml` makes deploys leave these alone. If you'd rather keep your settings in the repo, remove `keep_vars` and fill in the commented `[vars]` section in `wrangler.toml` instead.
 
@@ -105,25 +106,18 @@ From then on, Paperboy checks your feed at the start of every hour.
 - **The email:** edit `templates/new-post.mjml`. The placeholders you can use are `%%title%%`, `%%description%%`, `%%link%%`, `%%date%%`, `%%site_name%%` and `%%site_url%%`. Keep `{{{RESEND_UNSUBSCRIBE_URL}}}`, since Resend needs it for the unsubscribe link.
 - **The subject:** it's set in `src/index.js`, as `'New post: ' + post.title`.
 - **How often it checks:** change `crons` in `wrangler.toml`.
-- **The delay before sending:** change `scheduled_at` in `src/index.js`.
 
 ## Run Locally
 
-Running locally doesn't read the dashboard, so put every setting in a `.dev.vars` file in the project folder. It's in `.gitignore`, so it never gets committed.
+Running locally doesn't read the dashboard, so every setting goes in a `.dev.vars` file in the project folder. Start from the example:
 
-```text
-RESEND_API_KEY=re_...
-SITE_NAME=example.com
-SITE_URL=https://example.com/
-FEED_URL=https://example.com/index.xml
-FROM_EMAIL="Your Name <blog@news.example.com>"
-REPLY_TO=hello@example.com
-SEGMENT_ID=<a test segment with only your own address>
-TIME_ZONE=UTC
-DATE_LOCALE=en-GB
+```bash
+cp .dev.vars.example .dev.vars
 ```
 
-Use a test segment with only your own address in it, so local runs can never email real subscribers.
+Then fill it in. `.dev.vars` is in `.gitignore`, so it never gets committed. Use a test segment with only your own address in it as `SEGMENT_ID`, so local runs can never email real subscribers.
+
+If a setting is missing, the run stops with an error naming it, such as `Missing settings: FEED_URL`.
 
 Locally, KV starts empty, so the first run would only record the newest post. To make the newest post count as new, pretend an older one was emailed last:
 
@@ -143,7 +137,7 @@ Then, in a second terminal tab, trigger a run:
 curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 ```
 
-A new broadcast shows up in Resend under **Broadcasts**, scheduled two hours later. Run the same command again, and nothing new should appear, since the Worker now remembers that post. When you're done, unschedule or delete the test broadcast in Resend.
+A new broadcast shows up in Resend under **Broadcasts**, scheduled to send after the delay set by `SEND_DELAY_HOURS`, two hours by default. Run the same command again, and nothing new should appear, since the Worker now remembers that post. When you're done, unschedule or delete the test broadcast in Resend.
 
 ## Check on It
 
