@@ -21,6 +21,20 @@ Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [
 - A [Resend](https://resend.com/) account with a verified domain
 - An RSS 2.0 feed (Atom feeds aren't supported)
 
+### Keep Your Feed Short
+
+Paperboy only needs the newest post, but it downloads and reads the whole feed on every run. On Cloudflare's free plan, each run gets 10 ms of CPU time, so a smaller feed leaves more room. Many sites list every post in their feed by default. Limiting it to the newest 20 or so is plenty, since feed readers only look at recent posts anyway.
+
+On Hugo, for example, add this to your site's config:
+
+```yaml
+services:
+  rss:
+    limit: 20
+```
+
+You can see how much CPU time each run uses under **Workers & Pages > paperboy > Metrics**.
+
 ## Setup
 
 ### 1. Get the Code
