@@ -1,5 +1,7 @@
 # Paperboy
 
+[![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
+
 **Paperboy** emails your subscribers when a new post appears in your RSS feed, using [Resend](https://resend.com/). It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
 Once an hour, it reads your feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That leaves time to check the email and cancel it in Resend if something looks wrong.
@@ -162,6 +164,16 @@ npx wrangler kv key get last-sent --binding SENT_POSTS --remote
 ```
 
 If a run fails, for example because Resend rejects the broadcast, the error shows up under **Workers & Pages > paperboy > Observability**.
+
+## Tests
+
+The Worker has automated tests, which run on GitHub every time code is pushed. They use a fake feed and a fake Resend, so they don't need any accounts. To run them yourself:
+
+```bash
+npm test
+```
+
+This compiles the email template, then runs the tests.
 
 ## License
 
