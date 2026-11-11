@@ -3,37 +3,56 @@
 [![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
 [![License](https://img.shields.io/github/license/ayonkhan/paperboy)](LICENSE)
 
-**Paperboy** emails your subscribers when a new post appears in your RSS feed, using [Resend](https://resend.com/). It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
+When a new post appears in your RSS feed, **Paperboy** creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
-Once an hour, it reads your feed. When it finds a post it hasn't emailed yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That leaves time to check the email and cancel it in Resend if something looks wrong.
+Once an hour by default, it reads your feed. If the newest post is one it hasn't seen yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That gives you time to review the scheduled broadcast in Resend, and cancel it if something looks wrong. Paperboy doesn't check the email itself.
 
-It works with any site that has an RSS feed, whatever it's built with. It reads the live feed instead of watching your site's repo, so a post with a future date isn't emailed until it's actually published.
+I built it for my Hugo blog, which uses the PaperMod theme, but it works with any site that has an RSS feed, whatever it's built with. It reads the live feed instead of watching your site's repo, so a post with a future date isn't emailed until it's actually published. The email template is simple, so you may want to change it to match your site. See [Customize](#customize).
 
-Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [PaperMod Subscribe](https://github.com/ayonkhan/papermod-subscribe). Any other way of adding contacts to a Resend segment works too.
+Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll need some way of adding them to a segment in Resend: a signup form, an import or adding them by hand. On my blog, that's [PaperMod Subscribe](https://github.com/ayonkhan/papermod-subscribe), a signup form for Hugo sites using PaperMod.
+
+## Contents
+
+- [How It Works](#how-it-works)
+- [Limitations](#limitations)
+- [Requirements](#requirements)
+- [Setup](#setup)
+  - [1. Set Up Resend](#1-set-up-resend)
+  - [2. Deploy Paperboy](#2-deploy-paperboy), in one of three ways:
+    - [A. Fork on GitHub](#a-fork-on-github)
+    - [B. Copy to your own repo](#b-copy-to-your-own-repo)
+    - [C. Deploy from your computer](#c-deploy-from-your-computer)
+  - [3. Fill In the Settings](#3-fill-in-the-settings)
+- [Customize](#customize)
+- [Run Locally](#run-locally)
+- [Check on It](#check-on-it)
+- [Troubleshooting](#troubleshooting)
+- [Tests](#tests)
+- [License](#license)
 
 ## How It Works
 
-- `src/index.js` reads the feed, compares the newest post with the last one emailed, and creates the broadcast.
+- `src/index.js` reads the feed, compares the newest post with the last one it created a broadcast for, and creates the broadcast.
 - `templates/new-post.mjml` is the email template, written in [MJML](https://mjml.io/). It's compiled to HTML on every build. Placeholders use `%%name%%`, so they don't clash with Resend's `{{{...}}}` placeholders.
-- Cloudflare KV (`SENT_POSTS`) remembers the last post that was emailed. On the very first run, it only records the newest post and sends nothing, so turning it on doesn't email an old post to everyone.
+- Cloudflare KV (`SENT_POSTS`) remembers the last post it created a broadcast for. On the very first run, it only records the newest post and sends nothing, so turning it on doesn't email an old post to everyone.
 
 ## Limitations
 
-- **One post per check.** Each run emails the newest post only. If you publish two posts between checks, only the newer one is emailed, and the older one is skipped. Checks run once an hour by default, set by `crons` in `wrangler.toml`. Leave at least that long between posts if you want an email for each.
-- **Newest post first.** Paperboy emails the first item in the feed and doesn't sort by date. Hugo and most RSS feeds list the newest post first, but check yours.
-- **One try per post.** A post is marked as emailed once Resend accepts the broadcast. If you cancel the scheduled broadcast in Resend, or it fails later, Paperboy won't try again. To send it anyway, create a broadcast for it in Resend yourself.
+- **One post per check.** Each run creates a broadcast for the newest post only. If you publish two posts between checks, only the newer one gets a broadcast, and the older one is skipped. Checks run once an hour by default, set by `crons` in `wrangler.toml`. Leave at least that long between posts if you want an email for each.
+- **Newest post first.** Paperboy uses the first item in the feed and doesn't sort by date. Hugo and most RSS feeds list the newest post first, but check yours.
+- **One try per post.** A post is marked as done once Resend accepts the broadcast. If you cancel the scheduled broadcast in Resend, or it fails later, Paperboy won't try again. To send it anyway, create a broadcast for it in Resend yourself.
 - **RSS 2.0 only.** Atom feeds aren't supported.
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/)
 - A Cloudflare account, for the Worker and KV
 - A [Resend](https://resend.com/) account with a verified domain
 - An RSS 2.0 feed (Atom feeds aren't supported)
+- [Node.js](https://nodejs.org/), only to deploy from your computer or [run it locally](#run-locally)
 
 ### Keep Your Feed Short
 
-Paperboy only needs the newest post, but it downloads and reads the whole feed on every run. On Cloudflare's free plan, each run gets 10 ms of CPU time, so a smaller feed leaves more room. Many sites list every post in their feed by default. Limiting it to the newest 20 or so is plenty, since feed readers only look at recent posts anyway.
+Paperboy only needs the newest post, but it downloads and reads the whole feed on every run. On Cloudflare's free plan, each run gets 10 ms of CPU time, so a smaller feed leaves more room. Many sites list every post in their feed by default. If you don't post often, limiting it to the newest 20 or so is usually plenty. Feed readers use your feed too, so choose a limit that still covers the posts they might not have seen yet.
 
 On Hugo, for example, add this to your site's config:
 
@@ -47,59 +66,155 @@ You can see how much CPU time each run uses under **Workers & Pages > paperboy >
 
 ## Setup
 
-### 1. Get the Code
+Here's how the pieces fit together:
 
-Clone the repo:
+- **Resend** sends the emails. You'll need three things from it: a sending domain, a segment of subscribers and an API key.
+- **Cloudflare** runs Paperboy once an hour, and keeps track of the last post it created a broadcast for in a KV namespace.
+- **The settings** tell Paperboy where your feed is, who to email and how to reach Resend.
 
-```bash
-git clone https://github.com/ayonkhan/paperboy.git
-```
+Setup takes three steps:
 
-That's all you need to deploy from your computer. To keep your changes in Git, or to deploy on every push, you'll need a repo of your own on GitHub or GitLab. Forking on GitHub is the quickest way.
+1. [Set up Resend](#1-set-up-resend)
+2. [Deploy Paperboy](#2-deploy-paperboy), in one of three ways
+3. [Fill in the settings](#3-fill-in-the-settings)
 
-```bash
-cd paperboy
-```
+### 1. Set Up Resend
 
-Install the dependencies, at the exact versions in `package-lock.json`:
+You'll use three things from Resend in step 3, so keep them handy:
 
-```bash
-npm ci
-```
+1. **Your sending domain.** Add and verify it under **Domains**. Resend recommends a subdomain, such as `news.example.com`. Your sender address goes on this domain, and becomes `FROM_EMAIL`.
+2. **A segment ID.** Under **Audience**, create a segment for subscribers, and copy its ID. This becomes `SEGMENT_ID`.
+3. **An API key.** Under **API Keys**, create a key with sending access, and copy it. Resend only shows it once. This becomes `RESEND_API_KEY`.
 
-Log Wrangler in to your Cloudflare account:
+### 2. Deploy Paperboy
 
-```bash
-npx wrangler login
-```
+Choose one way:
 
-### 2. Create the KV Namespace
+| Option | Best if | Deploys |
+| --- | --- | --- |
+| [A. Fork on GitHub](#a-fork-on-github) | You want the easiest setup, all in the browser | On every push to `main` |
+| [B. Copy to your own repo](#b-copy-to-your-own-repo) | You want your own GitHub or GitLab repo, not a fork | On every push to `main` |
+| [C. Deploy from your computer](#c-deploy-from-your-computer) | You don't need a repo | When you run a command |
 
-This is where Paperboy remembers the last post it emailed:
+Each option needs a KV namespace, where Paperboy remembers the last post it created a broadcast for. The steps link to [Create the KV Namespace](#create-the-kv-namespace) when it's time.
+
+#### A. Fork on GitHub
+
+1. Fork this repo on GitHub.
+2. [Create the KV namespace](#create-the-kv-namespace), and put its ID in your fork's `wrangler.toml`. You can edit the file on GitHub, with the pencil icon.
+3. [Connect the repo to Cloudflare](#connect-the-repo-to-cloudflare).
+
+Then go to [step 3](#3-fill-in-the-settings).
+
+#### B. Copy to Your Own Repo
+
+1. Create an empty repo on GitHub or GitLab. Don't add a README or licence, so it stays empty.
+
+2. Clone Paperboy, and go into its folder:
+
+   ```bash
+   git clone https://github.com/ayonkhan/paperboy.git
+   ```
+
+   ```bash
+   cd paperboy
+   ```
+
+3. Point it to your repo instead of this one. Use your repo's URL:
+
+   ```bash
+   git remote set-url origin https://github.com/your-username/your-repo.git
+   ```
+
+4. [Create the KV namespace](#create-the-kv-namespace), put its ID in `wrangler.toml`, and commit the change:
+
+   ```bash
+   git commit -am "Use my KV namespace"
+   ```
+
+5. Push it to your repo:
+
+   ```bash
+   git push -u origin main
+   ```
+
+6. [Connect the repo to Cloudflare](#connect-the-repo-to-cloudflare).
+
+Then go to [step 3](#3-fill-in-the-settings).
+
+#### C. Deploy From Your Computer
+
+You'll need [Node.js](https://nodejs.org/).
+
+1. Clone Paperboy, and go into its folder:
+
+   ```bash
+   git clone https://github.com/ayonkhan/paperboy.git
+   ```
+
+   ```bash
+   cd paperboy
+   ```
+
+2. Install the dependencies, at the exact versions in `package-lock.json`:
+
+   ```bash
+   npm ci
+   ```
+
+3. Log Wrangler in to your Cloudflare account:
+
+   ```bash
+   npx wrangler login
+   ```
+
+4. [Create the KV namespace](#create-the-kv-namespace), and put its ID in `wrangler.toml`.
+
+5. Deploy. This compiles the email template and creates the Worker on Cloudflare:
+
+   ```bash
+   npm run deploy
+   ```
+
+   Run it again whenever you change something.
+
+Then go to [step 3](#3-fill-in-the-settings).
+
+#### Create the KV Namespace
+
+In Cloudflare, go to **Storage & Databases > KV**, create a namespace called `SENT_POSTS`, and copy its ID.
+
+Or, if you've logged Wrangler in, from the terminal:
 
 ```bash
 npx wrangler kv namespace create SENT_POSTS
 ```
 
-It prints an `id`. Put that in `wrangler.toml`, under `[[kv_namespaces]]`, in place of the one there.
+It prints the ID.
 
-### 3. Set Up Resend
+Then, in `wrangler.toml`, replace the `id` under `[[kv_namespaces]]` with yours:
 
-1. Add and verify your sending domain. Resend recommends a subdomain, such as `news.example.com`.
-2. Under **Audience**, create a segment for subscribers, and copy its ID.
-3. Under **API Keys**, create a key with sending access.
-
-### 4. Deploy
-
-```bash
-npm run deploy
+```toml
+[[kv_namespaces]]
+binding = "SENT_POSTS"
+id = "your-namespace-id"
 ```
 
-This compiles the template and creates the Worker on Cloudflare.
+Go back to the option you were following.
 
-To deploy on every push instead, connect your own repo in Cloudflare under **Workers & Pages > paperboy > Settings > Builds**. It works with GitHub and GitLab.
+#### Connect the Repo to Cloudflare
 
-### 5. Fill In the Settings
+1. In Cloudflare, go to **Workers & Pages**, click **Create**, and choose to import a repository.
+2. Connect your GitHub or GitLab account, and choose your repo.
+3. Keep the name `paperboy`, so it matches `name` in `wrangler.toml`.
+4. Set the build command to `npm run build`, and the deploy command to `npx wrangler deploy`.
+5. Deploy.
+
+From then on, every push to `main` deploys Paperboy.
+
+Go back to the option you were following.
+
+### 3. Fill In the Settings
 
 In Cloudflare, go to **Workers & Pages > paperboy > Settings > Variables and Secrets**, and add these as **Text** variables:
 
@@ -108,16 +223,14 @@ In Cloudflare, go to **Workers & Pages > paperboy > Settings > Variables and Sec
 | `SITE_NAME` | `example.com` | Shown at the top and bottom of the email |
 | `SITE_URL` | `https://example.com/` | Where the site name links to |
 | `FEED_URL` | `https://example.com/index.xml` | Your RSS feed |
-| `FROM_EMAIL` | `Your Name <blog@news.example.com>` | The sender, on your verified domain |
+| `FROM_EMAIL` | `Your Name <blog@news.example.com>` | The sender, on the domain you verified in step 1 |
 | `REPLY_TO` | `hello@example.com` | Where replies go (optional) |
-| `SEGMENT_ID` | the Resend segment ID | Who gets the email |
+| `SEGMENT_ID` | the segment ID from step 1 | Who gets the email |
 | `TIME_ZONE` | `America/Regina` | Used for the post date in the email (optional, defaults to `UTC`) |
 | `DATE_LOCALE` | `en-US` | How the date is written (optional, defaults to `en-GB`, as in "7 November 2026") |
 | `SEND_DELAY_HOURS` | `2` | How long to wait before sending, so you can check the email first (optional, defaults to `2`; use `0` to send right away) |
 
-`keep_vars = true` in `wrangler.toml` makes deploys leave these alone. If you'd rather keep your settings in the repo, remove `keep_vars` and fill in the commented `[vars]` section in `wrangler.toml` instead.
-
-The Resend API key is a secret, so add it as a **Secret** in the same place, named `RESEND_API_KEY`. Or set it from the terminal:
+Then add the API key from step 1 as a **Secret** in the same place, named `RESEND_API_KEY`. If you deployed from your computer, you can set it from the terminal instead:
 
 ```bash
 npx wrangler secret put RESEND_API_KEY
@@ -125,7 +238,9 @@ npx wrangler secret put RESEND_API_KEY
 
 It asks you to paste the key, and stores it encrypted.
 
-From then on, Paperboy checks your feed at the start of every hour.
+`keep_vars = true` in `wrangler.toml` makes deploys leave these settings alone. If you'd rather keep your settings in the repo, remove `keep_vars` and fill in the commented `[vars]` section in `wrangler.toml` instead.
+
+That's it. Paperboy now checks your feed at the start of every hour. The first run only records your newest post, so the first email goes out with your next post. If an hourly run happens before you've added the settings, it stops with a `Missing settings` error, which is harmless.
 
 ## Customize
 
@@ -135,17 +250,19 @@ From then on, Paperboy checks your feed at the start of every hour.
 
 ## Run Locally
 
+You'll need a clone with the dependencies installed and Wrangler logged in, as in steps 1 to 3 of [option C](#c-deploy-from-your-computer).
+
 Running locally doesn't read the dashboard, so every setting goes in a `.dev.vars` file in the project folder. Start from the example:
 
 ```bash
 cp .dev.vars.example .dev.vars
 ```
 
-Then fill it in. `.dev.vars` is in `.gitignore`, so it never gets committed. Use a test segment with only your own address in it as `SEGMENT_ID`, so local runs can never email real subscribers.
+Then fill it in. `.dev.vars` is in `.gitignore`, so it never gets committed. Local runs send real emails through Resend, using your real API key. Use a test segment with only your own address in it as `SEGMENT_ID`, so they can never reach real subscribers.
 
 If a setting is missing, the run stops with an error naming it, such as `Missing settings: FEED_URL`.
 
-Locally, KV starts empty, so the first run would only record the newest post. To make the newest post count as new, pretend an older one was emailed last:
+Locally, KV starts empty, so the first run would only record the newest post. To make the newest post count as new, pretend an older post was the last one with a broadcast:
 
 ```bash
 npx wrangler kv key put last-sent "https://example.com/posts/old/" --binding SENT_POSTS --local
@@ -167,7 +284,7 @@ A new broadcast shows up in Resend under **Broadcasts**, scheduled to send after
 
 ## Check on It
 
-To see which post was emailed last:
+To see the last post Paperboy created a broadcast for:
 
 ```bash
 npx wrangler kv key get last-sent --binding SENT_POSTS --remote
@@ -178,9 +295,9 @@ If a run fails, for example because Resend rejects the broadcast, the error show
 ## Troubleshooting
 
 **A new post wasn't emailed.**
-- On the very first run, Paperboy only records the newest post. The next new post is the first one emailed.
+- On the very first run, Paperboy only records the newest post. The next new post is the first one to get a broadcast.
 - The post has to be in your live RSS feed. Open `FEED_URL` in a browser and check that it's the first item.
-- If you published two posts between checks, only the newer one is emailed. See [Limitations](#limitations).
+- If you published two posts between checks, only the newer one gets a broadcast. See [Limitations](#limitations).
 - Check the broadcast in Resend under **Broadcasts**. It's scheduled to send after `SEND_DELAY_HOURS`, two hours by default.
 
 **A run failed.** The error shows up under **Workers & Pages > paperboy > Observability**.
