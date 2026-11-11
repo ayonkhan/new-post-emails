@@ -17,6 +17,11 @@ Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [
 - `templates/new-post.mjml` is the email template, written in [MJML](https://mjml.io/). It's compiled to HTML on every build. Placeholders use `%%name%%`, so they don't clash with Resend's `{{{...}}}` placeholders.
 - Cloudflare KV (`SENT_POSTS`) remembers the last post that was emailed. On the very first run, it only records the newest post and sends nothing, so turning it on doesn't email an old post to everyone.
 
+## Limitations
+
+- **One post per check.** Each run emails the newest post only. If you publish two posts between checks, only the newer one is emailed, and the older one is skipped. Checks run once an hour by default, set by `crons` in `wrangler.toml`. Leave at least that long between posts if you want an email for each.
+- **RSS 2.0 only.** Atom feeds aren't supported.
+
 ## Requirements
 
 - [Node.js](https://nodejs.org/)
@@ -167,6 +172,21 @@ npx wrangler kv key get last-sent --binding SENT_POSTS --remote
 ```
 
 If a run fails, for example because Resend rejects the broadcast, the error shows up under **Workers & Pages > paperboy > Observability**.
+
+## Troubleshooting
+
+**A new post wasn't emailed.**
+- On the very first run, Paperboy only records the newest post. The next new post is the first one emailed.
+- The post has to be in your live RSS feed. Open `FEED_URL` in a browser and check that it's the first item.
+- If you published two posts between checks, only the newer one is emailed. See [Limitations](#limitations).
+- Check the broadcast in Resend under **Broadcasts**. It's scheduled to send after `SEND_DELAY_HOURS`, two hours by default.
+
+**A run failed.** The error shows up under **Workers & Pages > paperboy > Observability**.
+- `Missing settings: ...` names the settings to add under **Settings > Variables and Secrets**.
+- `Resend returned 4xx` usually means `FROM_EMAIL` isn't on a verified domain, `SEGMENT_ID` is wrong, or the API key doesn't have sending access.
+- `Exceeded CPU time limit` means the feed is too big for the free plan. See [Keep Your Feed Short](#keep-your-feed-short).
+
+**Nothing happens at all.** Paperboy only reads RSS 2.0 feeds, with `<item>` entries. Atom feeds, with `<entry>`, aren't supported.
 
 ## Tests
 
