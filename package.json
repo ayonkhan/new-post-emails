@@ -1,7 +1,7 @@
 {
     "name": "paperboy",
     "private": true,
-    "description": "Watches your RSS feed and creates a Resend broadcast for your newest post, so your subscribers get an email",
+    "description": "A Cloudflare Worker that checks your RSS feed on a schedule and creates a Resend broadcast for your newest post, so your subscribers get an email",
     "type": "module",
     "scripts": {
         "build": "mjml templates/new-post.mjml -o templates/new-post.html",

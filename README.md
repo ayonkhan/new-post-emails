@@ -3,7 +3,7 @@
 [![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
 [![License](https://img.shields.io/github/license/ayonkhan/paperboy)](LICENSE)
 
-When a new post appears in your RSS feed, **Paperboy** creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
+**Paperboy** is a small Cloudflare Worker that watches your RSS feed. When a new post appears, it creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
 Once an hour by default, it reads your feed. If the newest post is one it hasn't seen yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That gives you time to review the scheduled broadcast in Resend, and cancel it if something looks wrong. Paperboy doesn't check the email itself.
 
