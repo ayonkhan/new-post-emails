@@ -41,11 +41,13 @@ You can see how much CPU time each run uses under **Workers & Pages > paperboy >
 
 ### 1. Get the Code
 
-Fork this repo on GitHub, then clone your fork:
+Clone the repo:
 
 ```bash
-git clone git@github.com:<your-username>/paperboy.git
+git clone https://github.com/ayonkhan/paperboy.git
 ```
+
+That's all you need to deploy from your computer. To keep your changes in Git, or to deploy on every push, you'll need a repo of your own on GitHub or GitLab. Forking on GitHub is the quickest way.
 
 ```bash
 cd paperboy
@@ -87,7 +89,7 @@ npm run deploy
 
 This compiles the template and creates the Worker on Cloudflare.
 
-To deploy on every push instead, connect your fork in Cloudflare under **Workers & Pages > paperboy > Settings > Builds**.
+To deploy on every push instead, connect your own repo in Cloudflare under **Workers & Pages > paperboy > Settings > Builds**. It works with GitHub and GitLab.
 
 ### 5. Fill In the Settings
 
