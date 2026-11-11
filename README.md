@@ -1,6 +1,7 @@
 # Paperboy
 
 [![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
+[![License](https://img.shields.io/github/license/ayonkhan/paperboy)](LICENSE)
 
 **Paperboy** emails your subscribers when a new post appears in your RSS feed, using [Resend](https://resend.com/). It's a small Cloudflare Worker. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
