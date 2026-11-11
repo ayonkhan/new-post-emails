@@ -20,6 +20,8 @@ Paperboy only sends. To collect subscribers on a Hugo site using PaperMod, see [
 ## Limitations
 
 - **One post per check.** Each run emails the newest post only. If you publish two posts between checks, only the newer one is emailed, and the older one is skipped. Checks run once an hour by default, set by `crons` in `wrangler.toml`. Leave at least that long between posts if you want an email for each.
+- **Newest post first.** Paperboy emails the first item in the feed and doesn't sort by date. Hugo and most RSS feeds list the newest post first, but check yours.
+- **One try per post.** A post is marked as emailed once Resend accepts the broadcast. If you cancel the scheduled broadcast in Resend, or it fails later, Paperboy won't try again. To send it anyway, create a broadcast for it in Resend yourself.
 - **RSS 2.0 only.** Atom feeds aren't supported.
 
 ## Requirements
@@ -59,10 +61,10 @@ That's all you need to deploy from your computer. To keep your changes in Git, o
 cd paperboy
 ```
 
-Install the dependencies:
+Install the dependencies, at the exact versions in `package-lock.json`:
 
 ```bash
-npm install
+npm ci
 ```
 
 Log Wrangler in to your Cloudflare account:
