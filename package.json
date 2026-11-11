@@ -1,7 +1,7 @@
 {
     "name": "paperboy",
     "private": true,
-    "description": "Emails your subscribers when a new post appears in your RSS feed, using Resend",
+    "description": "Watches your RSS feed and creates a Resend broadcast for your newest post, so your subscribers get an email",
     "type": "module",
     "scripts": {
         "build": "mjml templates/new-post.mjml -o templates/new-post.html",
