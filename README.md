@@ -34,7 +34,7 @@ Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll 
 
 - `src/index.js` reads the feed, compares the newest post with the last one it created a broadcast for, and creates the broadcast.
 - `templates/new-post.mjml` is the email template, written in [MJML](https://mjml.io/). It's compiled to HTML on every build. Placeholders use `%%name%%`, so they don't clash with Resend's `{{{...}}}` placeholders.
-- Cloudflare KV (`SENT_POSTS`) remembers the last post it created a broadcast for. On the very first run, it only records the newest post and sends nothing, so turning it on doesn't email an old post to everyone.
+- Cloudflare KV (`SENT_POSTS`) remembers the last post it created a broadcast for. On the very first run, it only records the newest post without creating a broadcast, so turning it on doesn't email an old post to everyone.
 
 ## Limitations
 
@@ -250,15 +250,17 @@ That's it. Paperboy now checks your feed at the start of every hour. The first r
 
 ## Run Locally
 
-You'll need a clone with the dependencies installed and Wrangler logged in, as in steps 1 to 3 of [option C](#c-deploy-from-your-computer).
+Running locally means running Paperboy on your own computer, without deploying it. It's for trying out changes, such as a new email template, before they reach Cloudflare and your subscribers. That's different from [option C](#c-deploy-from-your-computer), which deploys Paperboy to Cloudflare, where it runs every hour on its own.
 
-Running locally doesn't read the dashboard, so every setting goes in a `.dev.vars` file in the project folder. Start from the example:
+You'll need a clone with the dependencies installed and Wrangler logged in, as in steps 1 to 3 of option C.
+
+A local run can't see the settings you added in Cloudflare in [step 3](#3-fill-in-the-settings), so it needs its own copy, in a `.dev.vars` file in the project folder. Start from the example:
 
 ```bash
 cp .dev.vars.example .dev.vars
 ```
 
-Then fill it in. `.dev.vars` is in `.gitignore`, so it never gets committed. Local runs send real emails through Resend, using your real API key. Use a test segment with only your own address in it as `SEGMENT_ID`, so they can never reach real subscribers.
+Then fill it in. `.dev.vars` is in `.gitignore`, so it never gets committed. Local runs send real emails through Resend, using your real API key. Use a test segment with only your own address in it as `SEGMENT_ID`, so you don't email your subscribers by accident.
 
 If a setting is missing, the run stops with an error naming it, such as `Missing settings: FEED_URL`.
 
