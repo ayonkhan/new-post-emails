@@ -39,6 +39,7 @@ Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll 
 ## Limitations
 
 - **One post per check.** Each run creates a broadcast for the newest post only. If you publish two posts between checks, only the newer one gets a broadcast, and the older one is skipped. Checks run once an hour by default, set by `crons` in `wrangler.toml`. Leave at least that long between posts if you want an email for each.
+- **Backdated posts are skipped.** A post only counts as new if it's the newest item in the feed, and feeds are usually sorted by each post's date. If you publish a post with a date older than your latest post, it isn't emailed. Set the date to the day you publish it.
 - **Newest post first.** Paperboy uses the first item in the feed and doesn't sort by date. Hugo and most RSS feeds list the newest post first, but check yours.
 - **One try per post.** A post is marked as done once Resend accepts the broadcast. If you cancel the scheduled broadcast in Resend, or it fails later, Paperboy won't try again. To send it anyway, create a broadcast for it in Resend yourself.
 - **RSS 2.0 only.** Atom feeds aren't supported.
