@@ -72,7 +72,7 @@ You'll use three things from Resend in step 3, so keep them handy:
 
 1. **Your sending domain.** Add and verify it under **Domains**. Resend recommends a subdomain, such as `news.example.com`. Your sender address goes on this domain, and becomes `FROM_EMAIL`.
 2. **A segment ID.** Under **Audience**, create a segment for subscribers, and copy its ID. This becomes `SEGMENT_ID`.
-3. **An API key.** Under **API Keys**, create a key with sending access, and copy it. Resend only shows it once. This becomes `RESEND_API_KEY`.
+3. **An API key.** Under **API Keys**, create a key with **Full access**, and copy it. Paperboy creates broadcasts, and a key with only sending access can't do that. Resend only shows it once. This becomes `RESEND_API_KEY`.
 
 ### 2. Deploy Paperboy
 
@@ -306,7 +306,7 @@ If a run fails, for example because Resend rejects the broadcast, the error show
 
 **A run failed.** The error shows up under **Workers & Pages > paperboy > Observability**.
 - `Missing settings: ...` names the settings to add under **Settings > Variables and Secrets**.
-- `Resend returned 4xx` usually means `FROM_EMAIL` isn't on a verified domain, `SEGMENT_ID` is wrong, or the API key doesn't have sending access.
+- `Resend returned 4xx` usually means `FROM_EMAIL` isn't on a verified domain, `SEGMENT_ID` is wrong, or the API key doesn't have full access.
 - `Exceeded CPU time limit` means the feed is too big for the free plan. See [Keep Your Feed Short](#keep-your-feed-short).
 
 **Nothing happens at all.** Paperboy only reads RSS 2.0 feeds, with `<item>` entries. Atom feeds, with `<entry>`, aren't supported.
