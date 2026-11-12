@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
 [![License](https://img.shields.io/github/license/ayonkhan/paperboy)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/ayonkhan/paperboy)](https://github.com/ayonkhan/paperboy/releases)
 
 **Paperboy** is a small Cloudflare Worker for sites with an RSS feed. When you publish a new post, it creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
