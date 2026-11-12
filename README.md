@@ -3,13 +3,13 @@
 [![Tests](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml/badge.svg)](https://github.com/ayonkhan/paperboy/actions/workflows/test.yml)
 [![License](https://img.shields.io/github/license/ayonkhan/paperboy)](LICENSE)
 
-**Paperboy** is a small Cloudflare Worker that watches your RSS feed. When a new post appears, it creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
+**Paperboy** is a small Cloudflare Worker for sites with an RSS feed. When you publish a new post, it creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
 Once an hour by default, it reads your feed. If the newest post is one it hasn't seen yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That gives you time to review the scheduled broadcast in Resend, and cancel it if something looks wrong. Paperboy doesn't check the email itself.
 
 I built it for my Hugo blog, which uses the PaperMod theme, but it works with any site that has an RSS feed, whatever it's built with. It reads the live feed instead of watching your site's repo, so a post with a future date isn't emailed until it's actually published. The email template is simple, so you may want to change it to match your site. See [Customize](#customize).
 
-Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll need some way of adding them to a segment in Resend: a signup form, an import or adding them by hand. On my blog, that's [PaperMod Subscribe](https://github.com/ayonkhan/papermod-subscribe), a signup form for Hugo sites using PaperMod.
+Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll need some way of adding them to a segment in Resend: a subscription form, an import or adding them by hand. On my blog, that's [PaperMod Subscribe](https://github.com/ayonkhan/papermod-subscribe), a subscription form for Hugo sites using PaperMod.
 
 ## Contents
 
@@ -23,6 +23,7 @@ Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll 
     - [B. Copy to your own repo](#b-copy-to-your-own-repo)
     - [C. Deploy from your computer](#c-deploy-from-your-computer)
   - [3. Fill In the Settings](#3-fill-in-the-settings)
+- [Keep Your Feed Short](#keep-your-feed-short)
 - [Customize](#customize)
 - [Run Locally](#run-locally)
 - [Check on It](#check-on-it)
@@ -51,26 +52,12 @@ Paperboy only creates the broadcasts. It doesn't collect subscribers, so you'll 
 - An RSS 2.0 feed (Atom feeds aren't supported)
 - [Node.js](https://nodejs.org/), only to deploy from your computer or [run it locally](#run-locally)
 
-### Keep Your Feed Short
-
-Paperboy only needs the newest post, but it downloads and reads the whole feed on every run. On Cloudflare's free plan, each run gets 10 ms of CPU time, so a smaller feed leaves more room. Many sites list every post in their feed by default. If you don't post often, limiting it to the newest 20 or so is usually plenty. Feed readers use your feed too, so choose a limit that still covers the posts they might not have seen yet.
-
-On Hugo, for example, add this to your site's config:
-
-```yaml
-services:
-  rss:
-    limit: 20
-```
-
-You can see how much CPU time each run uses under **Workers & Pages > paperboy > Metrics**.
-
 ## Setup
 
 Here's how the pieces fit together:
 
 - **Resend** sends the emails. You'll need three things from it: a sending domain, a segment of subscribers and an API key.
-- **Cloudflare** runs Paperboy once an hour, and keeps track of the last post it created a broadcast for in a KV namespace.
+- **Cloudflare** runs Paperboy on a schedule, once an hour by default, and keeps track of the last post it created a broadcast for in a KV namespace.
 - **The settings** tell Paperboy where your feed is, who to email and how to reach Resend.
 
 Setup takes three steps:
@@ -241,7 +228,21 @@ It asks you to paste the key, and stores it encrypted.
 
 `keep_vars = true` in `wrangler.toml` makes deploys leave these settings alone. If you'd rather keep your settings in the repo, remove `keep_vars` and fill in the commented `[vars]` section in `wrangler.toml` instead.
 
-That's it. Paperboy now checks your feed at the start of every hour. The first run only records your newest post, so the first email goes out with your next post. If an hourly run happens before you've added the settings, it stops with a `Missing settings` error, which is harmless.
+That's it. Paperboy now checks your feed on its schedule, at the start of every hour by default. The first run only records your newest post, so the first email goes out with your next post. If an hourly run happens before you've added the settings, it stops with a `Missing settings` error, which is harmless.
+
+## Keep Your Feed Short
+
+Paperboy only needs the newest post, but it downloads and reads the whole feed on every run. On Cloudflare's free plan, each run gets 10 ms of CPU time, so a smaller feed leaves more room. Many sites list every post in their feed by default. If you don't post often, limiting it to the newest 20 or so is usually plenty. Feed readers use your feed too, so choose a limit that still covers the posts they might not have seen yet.
+
+On Hugo, for example, add this to your site's config:
+
+```yaml
+services:
+  rss:
+    limit: 20
+```
+
+You can see how much CPU time each run uses under **Workers & Pages > paperboy > Metrics**.
 
 ## Customize
 
@@ -283,7 +284,7 @@ Then, in a second terminal tab, trigger a run:
 curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 ```
 
-A new broadcast shows up in Resend under **Broadcasts**, scheduled to send after the delay set by `SEND_DELAY_HOURS`, two hours by default. Run the same command again, and nothing new should appear, since the Worker now remembers that post. When you're done, unschedule or delete the test broadcast in Resend.
+A new broadcast shows up in Resend under **Broadcasts**, scheduled to send after the delay set by `SEND_DELAY_HOURS`, two hours by default. Run the same command again, and nothing new should appear, since Paperboy now remembers that post. When you're done, unschedule or delete the test broadcast in Resend.
 
 ## Check on It
 
