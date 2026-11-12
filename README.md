@@ -6,10 +6,12 @@
 
 **Paperboy** is a small Cloudflare Worker for sites with an RSS feed. When you publish a new post, it creates an email broadcast for it in [Resend](https://resend.com/), and Resend sends it to your subscribers. I use it on my blog, [ayonkhan.ca](https://www.ayonkhan.ca/).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="images/email-dark.png">
-  <img src="images/email-light.png" alt="A new post email in Apple Mail, with the post's title, description and a Read the post button">
-</picture>
+<p>
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="images/email-dark.png">
+        <img src="images/email-light.png" alt="A new post email in Apple Mail, with the post's title, description and a Read the post button">
+    </picture>
+</p>
 
 Once an hour by default, it reads your feed. If the newest post is one it hasn't seen yet, it fills in the email template and creates a broadcast in Resend, scheduled two hours later by default. That gives you time to review the scheduled broadcast in Resend, and cancel it if something looks wrong. Paperboy doesn't check the email itself.
 
